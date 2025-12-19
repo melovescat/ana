@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ana's Birthday Surprise</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Modern clean font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap');
+        :root {
+            --font-main: 'Inter', sans-serif;
+        }
 
         body, html {
             margin: 0;
@@ -14,9 +18,16 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: radial-gradient(circle, #7dd3fc 0%, #0ea5e9 100%);
-            font-family: 'Shadows+Into+Light', cursive;
+            background: #0f172a;
+            font-family: var(--font-main);
             user-select: none;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+            z-index: -1;
         }
 
         /* Snow Overlay */
@@ -24,9 +35,9 @@
             position: absolute;
             background: white;
             border-radius: 50%;
-            opacity: 0.6;
+            opacity: 0.5;
             pointer-events: none;
-            z-index: 5;
+            z-index: 10;
             animation: fall linear infinite;
         }
 
@@ -34,7 +45,7 @@
             to { transform: translateY(105vh); }
         }
 
-        /* Video Area */
+        /* Video Stage */
         #stage {
             position: relative;
             width: 100%;
@@ -46,181 +57,193 @@
 
         #video-container {
             position: relative;
-            height: 80vh;
+            height: 85vh;
             aspect-ratio: 9/16;
-            background: rgba(0,0,0,0.1);
-            border-radius: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 32px;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            box-shadow: 0 0 100px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         video {
             height: 100%;
             width: 100%;
             object-fit: cover;
-            pointer-events: none; /* Hide controls interaction */
+            pointer-events: none;
         }
 
-        /* Realistic Ice Overlay */
+        /* Ice System */
         #ice-overlay {
             position: absolute;
             inset: 0;
-            z-index: 50;
-            background: rgba(224, 242, 254, 0.7); /* 30% transparent */
-            backdrop-filter: blur(8px);
+            z-index: 500;
+            background: rgba(186, 230, 253, 0.7); /* Kyle visible at 30% transparency */
+            backdrop-filter: blur(14px);
             cursor: pointer;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: opacity 1s ease-out;
+            transition: opacity 0.8s ease;
         }
 
-        .ice-texture {
+        .ice-crack {
             position: absolute;
-            inset: 0;
-            background: url('https://www.transparenttextures.com/patterns/frozen-wall.png');
-            opacity: 0.4;
             pointer-events: none;
+            z-index: 510;
+            stroke: #fff;
+            stroke-width: 3.5;
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.9));
+            stroke-linecap: round;
         }
 
-        .shard {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            pointer-events: none;
-            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            z-index: 60;
-        }
-
-        /* Captions */
+        /* Modern Captions */
         #caption-box {
             position: fixed;
-            bottom: 15%;
-            left: 0;
-            right: 0;
+            bottom: 12%;
+            width: 100%;
             text-align: center;
-            z-index: 100;
+            z-index: 200;
             padding: 0 20px;
             pointer-events: none;
         }
 
         .caption-text {
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.85);
             color: white;
-            padding: 10px 25px;
-            border-radius: 20px;
-            font-size: 1.6rem;
-            border: 2px solid white;
+            padding: 12px 32px;
+            border-radius: 16px;
+            font-size: 1.25rem;
+            font-weight: 700;
             display: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1.5px solid rgba(255,255,255,0.2);
+            max-width: 85%;
+            margin: 0 auto;
+            line-height: 1.4;
         }
 
-        /* Card Slap Transition */
-        #gift-card-main {
+        /* Interaction Trigger */
+        #take-hitbox {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            bottom: 30%;
+            right: 0%;
+            z-index: 600;
+            cursor: pointer;
+            display: none; /* Only show after captions */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hint-hand {
+            font-size: 50px;
+            animation: bounce-tap 0.8s infinite alternate;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+        }
+
+        @keyframes bounce-tap {
+            from { transform: scale(1) translateY(0); }
+            to { transform: scale(1.1) translateY(-20px); }
+        }
+
+        /* SVG Recreated Card */
+        #slap-container {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) scale(0) rotate(-720deg);
-            width: 320px;
-            height: 200px;
-            z-index: 200;
-            transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-            filter: drop-shadow(0 25px 60px rgba(0,0,0,0.6));
-            border-radius: 12px;
-            overflow: hidden;
-            pointer-events: none;
-            opacity: 0;
+            transform: translate(-50%, -50%) scale(0) rotate(-1080deg);
+            width: 360px;
+            height: 220px;
+            z-index: 800;
+            transition: all 0.75s cubic-bezier(0.15, 1.3, 0.3, 1.15);
+            filter: drop-shadow(0 40px 120px rgba(0,0,0,0.9));
+            display: none;
         }
 
-        #gift-card-main.active {
-            opacity: 1;
+        #slap-container.active {
+            display: block;
             transform: translate(-50%, -50%) scale(1) rotate(0deg);
-            pointer-events: auto;
         }
 
         #scratch-canvas {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             z-index: 10;
             cursor: crosshair;
             touch-action: none;
+            border-radius: 20px;
         }
 
-        .code-reveal {
+        .card-inner {
             position: absolute;
             inset: 0;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            border-radius: 20px;
+            overflow: hidden;
             z-index: 1;
+            background: #fff;
         }
 
-        #actual-code {
-            background: #111;
-            color: #4ade80;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 1.4rem;
-            letter-spacing: 2px;
-            display: none; /* Crucial: Hidden until scratch */
-        }
-
-        /* Interaction Hints */
-        #mini-trigger {
+        #revealed-code {
             position: absolute;
-            width: 80px;
-            bottom: 30%;
-            left: 55%;
-            transform: rotate(15deg);
-            cursor: pointer;
-            opacity: 0;
-            z-index: 80;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.4));
-            transition: opacity 0.5s;
-        }
-
-        .tap-hint {
-            position: absolute;
-            font-size: 40px;
-            animation: bounce 1s infinite alternate;
-            z-index: 90;
-            pointer-events: none;
-        }
-
-        @keyframes bounce {
-            from { transform: scale(1) translateY(0); }
-            to { transform: scale(1.2) translateY(-10px); }
-        }
-
-        /* Final UI */
-        #final-panel {
-            position: fixed;
-            bottom: -400px;
+            bottom: 50px;
             left: 50%;
             transform: translateX(-50%);
-            width: 90%;
-            max-width: 380px;
+            background: #000;
+            color: #4ade80;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            font-weight: 900;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 5;
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+            white-space: nowrap;
+        }
+
+        /* Instructions UI */
+        #final-panel {
+            position: fixed;
+            bottom: -600px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 420px;
             background: white;
-            border-radius: 24px 24px 0 0;
-            padding: 24px;
-            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 300;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            border-radius: 32px 32px 0 0;
+            padding: 35px;
+            z-index: 900;
             text-align: center;
+            transition: bottom 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 -20px 80px rgba(0,0,0,0.6);
         }
 
         #final-panel.visible { bottom: 0; }
+
+        .btn-copy {
+            background: #2563eb;
+            color: white;
+            font-weight: 800;
+            width: 100%;
+            padding: 20px;
+            border-radius: 18px;
+            margin-top: 25px;
+            transition: all 0.2s;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
+            font-size: 1.1rem;
+        }
+
+        .btn-copy:active { transform: scale(0.97); }
     </style>
 </head>
 <body>
 
+    <div id="bg-canvas"></div>
     <div id="snow-field"></div>
 
     <div id="stage">
@@ -229,68 +252,102 @@
                 <source src="kyle.webm" type="video/webm">
             </video>
 
-            <!-- Ice Overlay just on the video -->
-            <div id="ice-overlay" onclick="hitIce(event)">
-                <div class="ice-texture"></div>
-                <div class="text-white text-center z-10 pointer-events-none">
-                    <p class="text-2xl font-bold uppercase tracking-widest drop-shadow-lg">Frozen!</p>
-                    <p class="text-sm opacity-80 mt-2">Tap 5 times to break ice</p>
-                    <div id="hit-dots" class="flex justify-center gap-2 mt-4">
-                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
-                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
-                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
-                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
-                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
+            <!-- Ice Overlay -->
+            <div id="ice-overlay" onclick="onIceClick(event)">
+                <div class="text-slate-900 text-center pointer-events-none px-6">
+                    <h1 class="text-4xl font-black mb-1 tracking-tight">FROZEN!</h1>
+                    <p class="text-sm font-bold opacity-70">Tap 5 times to free the gift</p>
+                    <div id="progress-dots" class="flex justify-center gap-3 mt-6">
+                        <div class="w-4 h-4 rounded-full bg-slate-400/30 border border-slate-400/20"></div>
+                        <div class="w-4 h-4 rounded-full bg-slate-400/30 border border-slate-400/20"></div>
+                        <div class="w-4 h-4 rounded-full bg-slate-400/30 border border-slate-400/20"></div>
+                        <div class="w-4 h-4 rounded-full bg-slate-400/30 border border-slate-400/20"></div>
+                        <div class="w-4 h-4 rounded-full bg-slate-400/30 border border-slate-400/20"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Mini Trigger (The gift card Kyle is holding) -->
-            <img id="mini-trigger" src="1000093119.png" onclick="startSlap()">
-            <div id="hand-hint" class="tap-hint" style="bottom: 35%; left: 60%; display: none;">👆</div>
+            <!-- Trigger for taking the card -->
+            <div id="take-hitbox" onclick="slapCard()">
+                <div class="hint-hand">👆</div>
+            </div>
         </div>
     </div>
 
+    <!-- Captions -->
     <div id="caption-box">
-        <span id="caption-text" class="caption-text"></span>
+        <span id="caption-txt" class="caption-text"></span>
     </div>
 
-    <!-- The Slapped Card -->
-    <div id="gift-card-main">
-        <div class="code-reveal">
-            <img src="1000093119.png" class="absolute inset-0 w-full h-full object-cover">
-            <div id="actual-code">RBX-SURPRISE-9912</div>
+    <!-- SVG Recreated Gift Card -->
+    <div id="slap-container">
+        <div class="card-inner">
+            <svg width="360" height="220" viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" /> <!-- Purple -->
+                        <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" /> <!-- Blue -->
+                    </linearGradient>
+                </defs>
+                <rect width="360" height="220" fill="url(#cardGrad)" />
+                
+                <!-- Rainbow ROBLOX Text -->
+                <text x="180" y="95" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="52" font-weight="900" style="letter-spacing: -3px;">
+                    <tspan fill="#ff0000">R</tspan>
+                    <tspan fill="#ff8a00">O</tspan>
+                    <tspan fill="#ffea00">B</tspan>
+                    <tspan fill="#00ff00">L</tspan>
+                    <tspan fill="#0091ff">O</tspan>
+                    <tspan fill="#9d00ff">X</tspan>
+                </text>
+                
+                <text x="180" y="130" text-anchor="middle" fill="white" font-family="'Inter', sans-serif" font-size="12" font-weight="900" opacity="0.7" style="letter-spacing: 5px;">GIFT CARD</text>
+                
+                <!-- Code box container -->
+                <rect x="35" y="150" width="290" height="50" rx="12" fill="rgba(0,0,0,0.3)" />
+                <text x="50" y="170" fill="white" font-family="'Inter', sans-serif" font-size="9" font-weight="700" opacity="0.5">ROBLOX VOUCHER CODE:</text>
+            </svg>
+            <!-- YOUR SPECIFIC CODE -->
+            <div id="revealed-code">7PDQD-W8HV9-XQV8P</div>
         </div>
         <canvas id="scratch-canvas"></canvas>
     </div>
 
-    <!-- Final Instructions -->
+    <!-- Redirection Instructions -->
     <div id="final-panel">
-        <h2 class="text-2xl font-bold text-gray-800">Happy Birthday Ana!</h2>
-        <p class="text-sm text-gray-500 mb-6">Kyle saved this just for you.</p>
-        <button onclick="copyAndRedeem()" class="w-full bg-red-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition">
+        <h2 class="text-3xl font-black text-slate-900 tracking-tight">Gift Unlocked!</h2>
+        <p class="text-slate-500 mt-2 font-medium italic">"Have an awesome birthday, Ana!" - Kyle</p>
+        
+        <div class="mt-8 p-4 bg-slate-100 rounded-2xl border-2 border-slate-200 font-mono font-black text-xl text-slate-800 tracking-widest">
+            7PDQD-W8HV9-XQV8P
+        </div>
+
+        <button class="btn-copy" onclick="copyAndRedeem()">
             COPY CODE & REDEEM
         </button>
-        <a href="https://roblox.com/redeem" target="_blank" class="block mt-4 text-xs text-blue-500 font-bold underline">Go to roblox.com/redeem</a>
+        
+        <a href="https://roblox.com/redeem" target="_blank" class="block mt-6 text-sm font-bold text-blue-600 underline decoration-2 underline-offset-4">roblox.com/redeem</a>
     </div>
 
-    <!-- Hidden Audios -->
+    <!-- Audio -->
     <audio id="kyle-aud"><source src="kyle.mp3" type="audio/mpeg"></audio>
     <audio id="break-aud"><source src="break.mp3" type="audio/mpeg"></audio>
 
     <script>
         let hits = 0;
         const maxHits = 5;
+        let isStoryFinished = false;
+        const THE_CODE = "7PDQD-W8HV9-XQV8P";
+
         const vid = document.getElementById('kyle-vid');
         const aud = document.getElementById('kyle-aud');
         const breakAud = document.getElementById('break-aud');
         const ice = document.getElementById('ice-overlay');
-        const caption = document.getElementById('caption-text');
-        const mini = document.getElementById('mini-trigger');
-        const mainCard = document.getElementById('gift-card-main');
+        const hitbox = document.getElementById('take-hitbox');
+        const caption = document.getElementById('caption-txt');
+        const slapCardContainer = document.getElementById('slap-container');
         const finalPanel = document.getElementById('final-panel');
 
-        // Initial Snow
         function initSnow() {
             const field = document.getElementById('snow-field');
             for(let i=0; i<60; i++) {
@@ -305,69 +362,67 @@
         }
         initSnow();
 
-        function hitIce(e) {
+        function onIceClick(e) {
             hits++;
             
-            // Audio permission handshake
-            if(hits === 1) {
-                aud.play(); aud.pause(); aud.currentTime = 0;
+            // Interaction to unlock audio
+            if(hits === 1) { 
+                aud.play(); aud.pause(); aud.currentTime = 0; 
+                breakAud.play(); breakAud.pause(); breakAud.currentTime = 0;
             }
 
-            // Play break sound
             breakAud.currentTime = 0;
             breakAud.play();
 
-            // Visual feedback
-            const dots = document.querySelectorAll('#hit-dots div');
-            if(dots[hits-1]) dots[hits-1].style.background = 'white';
+            // Dot progress
+            const dots = document.querySelectorAll('#progress-dots div');
+            if(dots[hits-1]) dots[hits-1].style.background = '#1e293b';
 
-            // Generate a random jagged shatter piece
-            createShard(e.clientX, e.clientY);
+            createShatterLines(e.offsetX, e.offsetY);
 
             if(hits >= maxHits) {
                 shatterIce();
             }
         }
 
-        function createShard(x, y) {
-            const shard = document.createElement('div');
-            shard.className = 'shard';
-            const size = Math.random() * 100 + 50;
-            shard.style.width = size + 'px';
-            shard.style.height = size + 'px';
-            shard.style.left = (x - size/2) + 'px';
-            shard.style.top = (y - size/2) + 'px';
+        function createShatterLines(x, y) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 200 200");
+            svg.style.position = "absolute";
+            svg.style.width = "200px";
+            svg.style.height = "200px";
+            svg.style.left = (x - 100) + "px";
+            svg.style.top = (y - 100) + "px";
+            svg.style.pointerEvents = "none";
+            svg.style.zIndex = "510";
             
-            // Random polygon shape for "jagged" look
-            const points = [];
+            let lines = "";
             for(let i=0; i<6; i++) {
-                points.push(`${Math.random()*100}% ${Math.random()*100}%`);
+                let angle = (i * 60) + (Math.random()*40-20);
+                let length = 50 + Math.random()*30;
+                let x2 = 100 + Math.cos(angle * Math.PI/180) * length;
+                let y2 = 100 + Math.sin(angle * Math.PI/180) * length;
+                lines += `<line x1="100" y1="100" x2="${x2}" y2="${y2}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.8" />`;
             }
-            shard.style.clipPath = `polygon(${points.join(', ')})`;
-            
-            document.body.appendChild(shard);
-            
-            // Fly away
-            setTimeout(() => {
-                shard.style.transform = `translate(${(Math.random()-0.5)*1000}px, ${(Math.random()-0.5)*1000}px) rotate(${Math.random()*720}deg)`;
-                shard.style.opacity = '0';
-            }, 10);
-            setTimeout(() => shard.remove(), 1000);
+            svg.innerHTML = lines;
+            ice.appendChild(svg);
         }
 
         function shatterIce() {
             ice.style.opacity = '0';
-            setTimeout(() => ice.remove(), 1000);
-            startSequence();
+            setTimeout(() => {
+                ice.remove();
+                startKyleSpeech();
+            }, 800);
         }
 
-        function startSequence() {
+        function startKyleSpeech() {
             vid.play();
             aud.play();
 
             const script = [
-                { t: "Ana, Thanks for saving me!", d: 2500 },
-                { t: "Here, I bought this yesterday for your birthday...", d: 3500 },
+                { t: "Ana, thanks for saving me!", d: 2400 },
+                { t: "Here, I bought this yesterday for your birthday...", d: 3600 },
                 { t: "But your phone died, so just take it now!", d: 4000 }
             ];
 
@@ -376,48 +431,55 @@
                 setTimeout(() => {
                     caption.innerText = line.t;
                     caption.style.display = 'inline-block';
+                    
                     if(i === script.length - 1) {
-                        mini.style.opacity = '1';
-                        document.getElementById('hand-hint').style.display = 'block';
+                        setTimeout(() => {
+                            isStoryFinished = true;
+                            hitbox.style.display = 'flex';
+                            caption.innerText = "TAP GIFT TO TAKE IT!";
+                        }, 500);
                     }
                 }, delay);
                 delay += line.d;
             });
         }
 
-        function startSlap() {
-            mini.style.display = 'none';
-            document.getElementById('hand-hint').style.display = 'none';
-            caption.innerText = "SCRATCH THE CARD!";
+        function slapCard() {
+            if(!isStoryFinished) return;
+            hitbox.style.display = 'none';
+            caption.innerText = "SCRATCH TO REVEAL!";
             
-            mainCard.classList.add('active');
-            initScratch();
+            slapCardContainer.classList.add('active');
+            initScratchLayer();
         }
 
-        function initScratch() {
+        function initScratchLayer() {
             const canvas = document.getElementById('scratch-canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 320;
-            canvas.height = 200;
+            canvas.width = 360;
+            canvas.height = 220;
 
-            // Silver Layer
-            ctx.fillStyle = '#C0C0C0';
-            ctx.fillRect(0,0,320,200);
+            // Silver Scratch Coating
+            ctx.fillStyle = '#cfd8dc';
+            ctx.fillRect(0,0,360,220);
             
-            // Frost texture on card
-            ctx.globalAlpha = 0.4;
-            ctx.fillStyle = '#999';
-            for(let i=0; i<300; i++) ctx.fillRect(Math.random()*320, Math.random()*200, 2, 2);
+            // Noise texture for silver
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = '#455a64';
+            for(let i=0; i<800; i++) ctx.fillRect(Math.random()*360, Math.random()*220, 1.5, 1.5);
             ctx.globalAlpha = 1;
 
-            ctx.fillStyle = '#444';
-            ctx.font = 'bold 20px Arial';
+            ctx.fillStyle = '#37474f';
+            ctx.font = '900 20px Inter, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('SCRATCH TO REVEAL', 160, 105);
+            ctx.fillText('SCRATCH HERE', 180, 115);
 
             let painting = false;
 
-            const draw = (e) => {
+            const start = () => painting = true;
+            const end = () => painting = false;
+
+            const scratch = (e) => {
                 if(!painting) return;
                 const rect = canvas.getBoundingClientRect();
                 const x = (e.clientX || e.touches[0].clientX) - rect.left;
@@ -425,51 +487,52 @@
 
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.beginPath();
-                ctx.arc(x, y, 25, 0, Math.PI*2);
+                ctx.arc(x, y, 32, 0, Math.PI*2);
                 ctx.fill();
-                checkRevealed();
+                
+                checkProgress();
             };
 
-            const checkRevealed = () => {
-                const data = ctx.getImageData(0,0,320,200).data;
-                let count = 0;
-                for(let i=3; i<data.length; i+=4) if(data[i] === 0) count++;
-                if(count > (320*200)*0.65) {
-                    finishScratch();
+            const checkProgress = () => {
+                const data = ctx.getImageData(0,0,360,220).data;
+                let total = 0;
+                for(let i=3; i<data.length; i+=4) if(data[i] === 0) total++;
+                if(total > (360*220)*0.65) {
+                    revealFinal();
                 }
             };
 
-            const finishScratch = () => {
+            const revealFinal = () => {
                 canvas.style.transition = 'opacity 1s';
                 canvas.style.opacity = '0';
-                document.getElementById('actual-code').style.display = 'block';
+                document.getElementById('revealed-code').style.opacity = '1';
+
                 setTimeout(() => {
                     canvas.remove();
                     finalPanel.classList.add('visible');
-                    caption.innerText = "SUCCESS!";
+                    caption.innerText = "HAPPY BIRTHDAY ANA!";
                 }, 1000);
             };
 
-            canvas.addEventListener('mousedown', () => painting = true);
-            canvas.addEventListener('touchstart', (e) => { painting = true; e.preventDefault(); }, {passive: false});
-            window.addEventListener('mouseup', () => painting = false);
-            window.addEventListener('touchend', () => painting = false);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('touchmove', draw, {passive: false});
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('touchstart', (e) => { start(); e.preventDefault(); }, {passive: false});
+            window.addEventListener('mouseup', end);
+            window.addEventListener('touchend', end);
+            canvas.addEventListener('mousemove', scratch);
+            canvas.addEventListener('touchmove', scratch, {passive: false});
         }
 
         function copyAndRedeem() {
-            const code = "RBX-SURPRISE-9912";
             const el = document.createElement('textarea');
-            el.value = code;
+            el.value = THE_CODE;
             document.body.appendChild(el);
             el.select();
             document.execCommand('copy');
             document.body.removeChild(el);
             
-            const btn = document.querySelector('#final-panel button');
-            btn.innerText = "COPIED! OPENING...";
-            btn.classList.replace('bg-red-600', 'bg-green-600');
+            const btn = document.querySelector('.btn-copy');
+            btn.innerText = "COPIED TO CLIPBOARD!";
+            btn.style.background = "#10b981";
             
             setTimeout(() => {
                 window.open('https://roblox.com/redeem', '_blank');
