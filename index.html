@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ana's Birthday Surprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle, #7dd3fc 0%, #0ea5e9 100%);
+            font-family: 'Shadows+Into+Light', cursive;
+            user-select: none;
+        }
+
+        /* Snow Overlay */
+        .snowflake {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 5;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(105vh); }
+        }
+
+        /* Video Area */
+        #stage {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #video-container {
+            position: relative;
+            height: 80vh;
+            aspect-ratio: 9/16;
+            background: rgba(0,0,0,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        video {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+            pointer-events: none; /* Hide controls interaction */
+        }
+
+        /* Realistic Ice Overlay */
+        #ice-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            background: rgba(224, 242, 254, 0.7); /* 30% transparent */
+            backdrop-filter: blur(8px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease-out;
+        }
+
+        .ice-texture {
+            position: absolute;
+            inset: 0;
+            background: url('https://www.transparenttextures.com/patterns/frozen-wall.png');
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .shard {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 60;
+        }
+
+        /* Captions */
+        #caption-box {
+            position: fixed;
+            bottom: 15%;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 100;
+            padding: 0 20px;
+            pointer-events: none;
+        }
+
+        .caption-text {
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 1.6rem;
+            border: 2px solid white;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Card Slap Transition */
+        #gift-card-main {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0) rotate(-720deg);
+            width: 320px;
+            height: 200px;
+            z-index: 200;
+            transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 25px 60px rgba(0,0,0,0.6));
+            border-radius: 12px;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        #gift-card-main.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            pointer-events: auto;
+        }
+
+        #scratch-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .code-reveal {
+            position: absolute;
+            inset: 0;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        #actual-code {
+            background: #111;
+            color: #4ade80;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            display: none; /* Crucial: Hidden until scratch */
+        }
+
+        /* Interaction Hints */
+        #mini-trigger {
+            position: absolute;
+            width: 80px;
+            bottom: 30%;
+            left: 55%;
+            transform: rotate(15deg);
+            cursor: pointer;
+            opacity: 0;
+            z-index: 80;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.4));
+            transition: opacity 0.5s;
+        }
+
+        .tap-hint {
+            position: absolute;
+            font-size: 40px;
+            animation: bounce 1s infinite alternate;
+            z-index: 90;
+            pointer-events: none;
+        }
+
+        @keyframes bounce {
+            from { transform: scale(1) translateY(0); }
+            to { transform: scale(1.2) translateY(-10px); }
+        }
+
+        /* Final UI */
+        #final-panel {
+            position: fixed;
+            bottom: -400px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 380px;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: 24px;
+            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 300;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        #final-panel.visible { bottom: 0; }
+    </style>
+</head>
+<body>
+
+    <div id="snow-field"></div>
+
+    <div id="stage">
+        <div id="video-container">
+            <video id="kyle-vid" loop playsinline preload="auto">
+                <source src="kyle.mp4" type="video/mp4">
+            </video>
+
+            <!-- Ice Overlay just on the video -->
+            <div id="ice-overlay" onclick="hitIce(event)">
+                <div class="ice-texture"></div>
+                <div class="text-white text-center z-10 pointer-events-none">
+                    <p class="text-2xl font-bold uppercase tracking-widest drop-shadow-lg">Frozen!</p>
+                    <p class="text-sm opacity-80 mt-2">Tap 5 times to break ice</p>
+                    <div id="hit-dots" class="flex justify-center gap-2 mt-4">
+                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-white/50"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mini Trigger (The gift card Kyle is holding) -->
+            <img id="mini-trigger" src="1000093119.png" onclick="startSlap()">
+            <div id="hand-hint" class="tap-hint" style="bottom: 35%; left: 60%; display: none;">👆</div>
+        </div>
+    </div>
+
+    <div id="caption-box">
+        <span id="caption-text" class="caption-text"></span>
+    </div>
+
+    <!-- The Slapped Card -->
+    <div id="gift-card-main">
+        <div class="code-reveal">
+            <img src="1000093119.png" class="absolute inset-0 w-full h-full object-cover">
+            <div id="actual-code">RBX-SURPRISE-9912</div>
+        </div>
+        <canvas id="scratch-canvas"></canvas>
+    </div>
+
+    <!-- Final Instructions -->
+    <div id="final-panel">
+        <h2 class="text-2xl font-bold text-gray-800">Happy Birthday Ana!</h2>
+        <p class="text-sm text-gray-500 mb-6">Kyle saved this just for you.</p>
+        <button onclick="copyAndRedeem()" class="w-full bg-red-600 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition">
+            COPY CODE & REDEEM
+        </button>
+        <a href="https://roblox.com/redeem" target="_blank" class="block mt-4 text-xs text-blue-500 font-bold underline">Go to roblox.com/redeem</a>
+    </div>
+
+    <!-- Hidden Audios -->
+    <audio id="kyle-aud"><source src="kyle.mp3" type="audio/mpeg"></audio>
+    <audio id="break-aud"><source src="break.mp3" type="audio/mpeg"></audio>
+
+    <script>
+        let hits = 0;
+        const maxHits = 5;
+        const vid = document.getElementById('kyle-vid');
+        const aud = document.getElementById('kyle-aud');
+        const breakAud = document.getElementById('break-aud');
+        const ice = document.getElementById('ice-overlay');
+        const caption = document.getElementById('caption-text');
+        const mini = document.getElementById('mini-trigger');
+        const mainCard = document.getElementById('gift-card-main');
+        const finalPanel = document.getElementById('final-panel');
+
+        // Initial Snow
+        function initSnow() {
+            const field = document.getElementById('snow-field');
+            for(let i=0; i<60; i++) {
+                const s = document.createElement('div');
+                s.className = 'snowflake';
+                s.style.left = Math.random() * 100 + 'vw';
+                s.style.width = s.style.height = (Math.random() * 4 + 2) + 'px';
+                s.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                s.style.animationDelay = Math.random() * 5 + 's';
+                field.appendChild(s);
+            }
+        }
+        initSnow();
+
+        function hitIce(e) {
+            hits++;
+            
+            // Audio permission handshake
+            if(hits === 1) {
+                aud.play(); aud.pause(); aud.currentTime = 0;
+            }
+
+            // Play break sound
+            breakAud.currentTime = 0;
+            breakAud.play();
+
+            // Visual feedback
+            const dots = document.querySelectorAll('#hit-dots div');
+            if(dots[hits-1]) dots[hits-1].style.background = 'white';
+
+            // Generate a random jagged shatter piece
+            createShard(e.clientX, e.clientY);
+
+            if(hits >= maxHits) {
+                shatterIce();
+            }
+        }
+
+        function createShard(x, y) {
+            const shard = document.createElement('div');
+            shard.className = 'shard';
+            const size = Math.random() * 100 + 50;
+            shard.style.width = size + 'px';
+            shard.style.height = size + 'px';
+            shard.style.left = (x - size/2) + 'px';
+            shard.style.top = (y - size/2) + 'px';
+            
+            // Random polygon shape for "jagged" look
+            const points = [];
+            for(let i=0; i<6; i++) {
+                points.push(`${Math.random()*100}% ${Math.random()*100}%`);
+            }
+            shard.style.clipPath = `polygon(${points.join(', ')})`;
+            
+            document.body.appendChild(shard);
+            
+            // Fly away
+            setTimeout(() => {
+                shard.style.transform = `translate(${(Math.random()-0.5)*1000}px, ${(Math.random()-0.5)*1000}px) rotate(${Math.random()*720}deg)`;
+                shard.style.opacity = '0';
+            }, 10);
+            setTimeout(() => shard.remove(), 1000);
+        }
+
+        function shatterIce() {
+            ice.style.opacity = '0';
+            setTimeout(() => ice.remove(), 1000);
+            startSequence();
+        }
+
+        function startSequence() {
+            vid.play();
+            aud.play();
+
+            const script = [
+                { t: "Ana, Thanks for saving me!", d: 2500 },
+                { t: "Here, I bought this yesterday for your birthday...", d: 3500 },
+                { t: "But your phone died, so just take it now!", d: 4000 }
+            ];
+
+            let delay = 0;
+            script.forEach((line, i) => {
+                setTimeout(() => {
+                    caption.innerText = line.t;
+                    caption.style.display = 'inline-block';
+                    if(i === script.length - 1) {
+                        mini.style.opacity = '1';
+                        document.getElementById('hand-hint').style.display = 'block';
+                    }
+                }, delay);
+                delay += line.d;
+            });
+        }
+
+        function startSlap() {
+            mini.style.display = 'none';
+            document.getElementById('hand-hint').style.display = 'none';
+            caption.innerText = "SCRATCH THE CARD!";
+            
+            mainCard.classList.add('active');
+            initScratch();
+        }
+
+        function initScratch() {
+            const canvas = document.getElementById('scratch-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 320;
+            canvas.height = 200;
+
+            // Silver Layer
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(0,0,320,200);
+            
+            // Frost texture on card
+            ctx.globalAlpha = 0.4;
+            ctx.fillStyle = '#999';
+            for(let i=0; i<300; i++) ctx.fillRect(Math.random()*320, Math.random()*200, 2, 2);
+            ctx.globalAlpha = 1;
+
+            ctx.fillStyle = '#444';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SCRATCH TO REVEAL', 160, 105);
+
+            let painting = false;
+
+            const draw = (e) => {
+                if(!painting) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, 25, 0, Math.PI*2);
+                ctx.fill();
+                checkRevealed();
+            };
+
+            const checkRevealed = () => {
+                const data = ctx.getImageData(0,0,320,200).data;
+                let count = 0;
+                for(let i=3; i<data.length; i+=4) if(data[i] === 0) count++;
+                if(count > (320*200)*0.65) {
+                    finishScratch();
+                }
+            };
+
+            const finishScratch = () => {
+                canvas.style.transition = 'opacity 1s';
+                canvas.style.opacity = '0';
+                document.getElementById('actual-code').style.display = 'block';
+                setTimeout(() => {
+                    canvas.remove();
+                    finalPanel.classList.add('visible');
+                    caption.innerText = "SUCCESS!";
+                }, 1000);
+            };
+
+            canvas.addEventListener('mousedown', () => painting = true);
+            canvas.addEventListener('touchstart', (e) => { painting = true; e.preventDefault(); }, {passive: false});
+            window.addEventListener('mouseup', () => painting = false);
+            window.addEventListener('touchend', () => painting = false);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchmove', draw, {passive: false});
+        }
+
+        function copyAndRedeem() {
+            const code = "RBX-SURPRISE-9912";
+            const el = document.createElement('textarea');
+            el.value = code;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            
+            const btn = document.querySelector('#final-panel button');
+            btn.innerText = "COPIED! OPENING...";
+            btn.classList.replace('bg-red-600', 'bg-green-600');
+            
+            setTimeout(() => {
+                window.open('https://roblox.com/redeem', '_blank');
+            }, 800);
+        }
+    </script>
+</body>
+</html>
+
